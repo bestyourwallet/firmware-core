@@ -1,0 +1,12 @@
+{
+  "name": "HyperEVM",
+  "chain": "HYPEREVM",
+  "tokens": [
+    {
+      "name": "USD Coin",
+      "symbol": "USDC",
+      "address": "0xb88339cb7199b77e23db6e890353e22632ba630f",
+      "decimals": 6
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+name: "Release Assets Builder"
+
+on:
+  workflow_dispatch:
+
+env:
+  BASE_RESOURCE_VERSION: "1.3.0"
+
+jobs:
+  build-static:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Populate vars"
+        run: |
+          FIRMWARE_VERSION=$(cat ./core/embed/firmware/version.h | grep -E '#define UKEY_VERSION_(MAJOR|MINOR|PATCH)' | awk '{printf "%s.", $3}' | sed 's/\.$//')
+          BUILD_DATE=$(date +"%Y%m%d")
+          SHORT_HASH=$(git rev-parse --short HEAD)
+          echo "FIRMWARE_VERSION=$FIRMWARE_VERSION" >> $GITHUB_ENV
+          echo "BUILD_DATE=$BUILD_DATE" >> $GITHUB_ENV
+          echo "SHORT_HASH=$SHORT_HASH" >> $GITHUB_ENV
+          echo "ARTIFACTS_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"" >> $GITHUB_ENV
+
+      - name: "Download base resources"
+        run: |
+          mkdir dist
+          wget -O dist/res-${{ env.BASE_RESOURCE_VERSION }}.zip https://web.ukey.dev/hardware/pro/resource/res-${{ env.BASE_RESOURCE_VERSION }}.zip
+          wget -O dist/res-${{ env.BASE_RESOURCE_VERSION }}-multi_level.zip https://web.ukey.dev/hardware/pro/resource/res-${{ env.BASE_RESOURCE_VERSION }}-multi_level.zip
+
+      - name: "LFS pull"
+        run: |
+          sudo apt update
+          sudo apt install -y xattr git-lfs
+          git lfs pull
+
+      - name: "Clean only emulator used resources"
+        run: >
+          pushd core/src/trezor/lvglui/assets/default/font &&
+          rm *-emu.bin;
+          popd
+
+      - name: "Build resource packages"
+        run: |
+          copy_changed_files() {
+            local src_dir="$1"
+            local base_dir="$2"
+            local dest_dir="$3"
+
+            mkdir -p "$dest_dir"
+            find "$src_dir" -type f -print0 | while IFS= read -r -d '' src_file; do
+              local rel_path="${src_file#$src_dir/}"
+              if [ ! -f "$base_dir/$rel_path" ] || ! cmp -s "$src_file" "$base_dir/$rel_path"; then
+                mkdir -p "$dest_dir/$(dirname "$rel_path")"
+                cp -p "$src_file" "$dest_dir/$rel_path"
+              fi
+            done
+          }
+
+          make_multi_level_res() {
+            local src_dir="$1"
+            local dest_dir="$2"
+
+            rm -rf "$dest_dir"
+            mkdir -p "$dest_dir/light" "$dest_dir/dark" "$dest_dir/default"
+            find "$src_dir" -maxdepth 1 -type f -print0 | while IFS= read -r -d '' src_file; do
+              local file_name
+              file_name=$(basename "$src_file")
+              case "$file_name" in
+                .UKEY_RESOURCE)
+                  cp -p "$src_file" "$dest_dir/$file_name"
+                  ;;
+                ukey_resource_full.marker)
+                  ;;
+                li_*)
+                  cp -p "$src_file" "$dest_dir/light/$file_name"
+                  ;;
+                da_*)
+                  cp -p "$src_file" "$dest_dir/dark/$file_name"
+                  ;;
+                *)
+                  cp -p "$src_file" "$dest_dir/default/$file_name"
+                  ;;
+              esac
+            done
+          }
+
+          write_update_marker() {
+            local res_dir="$1"
+            local package_type="$2"
+            local theme_files
+            theme_files=$(find "$res_dir" -maxdepth 1 -type f \( -name 'li_*' -o -name 'da_*' \) | wc -l)
+            printf "version=1\ntype=%s\ntheme_files=%s\n" "$package_type" "$theme_files" > "$res_dir/ukey_resource_full.marker"
+          }
+
+          unzip dist/res-${{ env.BASE_RESOURCE_VERSION }}.zip -d dist/res-base
+          unzip dist/res-${{ env.BASE_RESOURCE_VERSION }}-multi_level.zip -d dist/res-base-multi_level
+
+          mkdir dist-res
+          bash tools/copy-assets.sh core/src/trezor/lvglui/assets dist-res
+          if [ -f dist/res-base/.UKEY_RESOURCE ]; then
+            cp -p dist/res-base/.UKEY_RESOURCE dist-res/.UKEY_RESOURCE
+          elif [ -f dist/res-base-multi_level/.UKEY_RESOURCE ]; then
+            cp -p dist/res-base-multi_level/.UKEY_RESOURCE dist-res/.UKEY_RESOURCE
+          fi
+          ls dist-res | xargs -r -I{} xattr -d com.apple.quarantine dist-res/{} || true
+          chmod 666 dist-res/* dist-res/.UKEY_RESOURCE 2>/dev/null || true
+
+          copy_changed_files dist-res dist/res-base dist/res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }}
+          write_update_marker dist/res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }} ota
+          (cd dist/res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }} && zip -r ../res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }}.zip .)
+
+          write_update_marker dist-res full
+          (cd dist-res && zip -r ../dist/res-${{ env.FIRMWARE_VERSION }}.zip .)
+
+          make_multi_level_res dist-res dist-res-multi_level
+          (cd dist-res-multi_level && zip -r ../dist/res-${{ env.FIRMWARE_VERSION }}-multi_level.zip .)
+
+          copy_changed_files dist-res-multi_level dist/res-base-multi_level dist/res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }}-multi_level
+          mkdir -p dist/res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }}-multi_level/light dist/res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }}-multi_level/dark dist/res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }}-multi_level/default
+          (cd dist/res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }}-multi_level && zip -r ../res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }}-multi_level.zip .)
+
+      - name: "Upload Artifacts"
+        uses: actions/upload-artifact@v4
+        with:
+          name: Firmware-resource-${{ env.FIRMWARE_VERSION }}
+          path: |
+            dist/res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }}.zip
+            dist/res-${{ env.FIRMWARE_VERSION }}.zip
+            dist/res-${{ env.BASE_RESOURCE_VERSION }}-${{ env.FIRMWARE_VERSION }}-multi_level.zip
+            dist/res-${{ env.FIRMWARE_VERSION }}-multi_level.zip
+
+      # - name: "Notify to Slack"
+      #   uses: ukey/actions/notice-slack-app-update@main
+      #   with:
+      #     web-hook-url: ${{ secrets.SLACK_DEV_RELEASE_WEBHOOK }}
+      #     artifact-type: Core-FIRMWARE
+      #     artifact-name: Core-Static-Resource
+      #     artifact-bundle-id: "so.ukey.firmware.core"
+      #     artifact-version-name: "${{ env.FIRMWARE_VERSION }}"
+      #     artifact-version-code: "${{ env.SHORT_HASH }}-${{ env.BUILD_DATE }}"
+      #     artifact-download-url: "${{ env.ARTIFACTS_URL }}"
+      #     change-log: ""
+      #     custom-issue-url: ""
+      #     custom-message-title: ""
+      #     custom-message-payload: ""

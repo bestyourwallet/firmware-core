@@ -1,0 +1,12 @@
+{
+  "name": "Flare",
+  "chain": "FLR",
+  "tokens": [
+    {
+      "name": "USD Coin",
+      "symbol": "USDc",
+      "address": "0xfbda5f676cb37624f28265a144a48b0d6e87d3b6",
+      "decimals": 6
+    }
+  ]
+}

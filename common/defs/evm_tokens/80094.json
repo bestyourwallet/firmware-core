@@ -1,0 +1,12 @@
+{
+  "name": "Berachain",
+  "chain": "BERA",
+  "tokens": [
+    {
+      "name": "DOLO",
+      "symbol": "DOLO",
+      "address": "0x0F81001eF0A83ecCE5ccebf63EB302c70a39a654",
+      "decimals": 18
+    }
+  ]
+}

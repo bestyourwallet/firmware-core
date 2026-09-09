@@ -1,0 +1,12 @@
+{
+  "name": "Taiko",
+  "chain": "TAIKO",
+  "tokens": [
+    {
+      "name": "USD Coin",
+      "symbol": "USDC",
+      "address": "0x07d83526730c7438048D55A4fc0b850e2aaB6f0b",
+      "decimals": 6
+    }
+  ]
+}

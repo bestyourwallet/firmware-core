@@ -1,0 +1,12 @@
+{
+  "name": "Kava",
+  "chain": "KAVA",
+  "tokens": [
+    {
+      "name": "Tether USD",
+      "symbol": "USDt",
+      "address": "0x919c1c267bc06a7039e03fcc2ef738525769109c",
+      "decimals": 6
+    }
+  ]
+}

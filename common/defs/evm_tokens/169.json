@@ -1,0 +1,12 @@
+{
+  "name": "Manta Pacific",
+  "chain": "MANTA",
+  "tokens": [
+    {
+      "name": "USD Coin",
+      "symbol": "USDc",
+      "address": "0xb73603c5d87fa094b7314c74ace2e64d165016fb",
+      "decimals": 6
+    }
+  ]
+}

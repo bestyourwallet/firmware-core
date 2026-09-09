@@ -1,0 +1,12 @@
+{
+  "name": "Blast",
+  "chain": "BLAST",
+  "tokens": [
+    {
+      "name": "USDB",
+      "symbol": "USDB",
+      "address": "0x4300000000000000000000000000000000000003",
+      "decimals": 18
+    }
+  ]
+}

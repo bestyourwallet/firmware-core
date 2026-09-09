@@ -1,0 +1,12 @@
+{
+  "name": "zkLink Nova",
+  "chain": "ZKLINK",
+  "tokens": [
+    {
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "address": "0x2f8a25ac62179b31d62d7f80884ae57464699059",
+      "decimals": 6
+    }
+  ]
+}

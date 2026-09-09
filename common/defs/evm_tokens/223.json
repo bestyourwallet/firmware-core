@@ -1,0 +1,12 @@
+{
+  "name": "B2 Mainnet",
+  "chain": "B2",
+  "tokens": [
+    {
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "address": "0x681202351a488040fa4fdcc24188afb582c9dd62",
+      "decimals": 6
+    }
+  ]
+}

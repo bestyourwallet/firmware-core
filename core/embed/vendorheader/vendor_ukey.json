@@ -1,0 +1,25 @@
+{
+    "header_len": 2560,
+    "text": "UKey",
+    "expiry": 0,
+    "version": {
+        "major": 0,
+        "minor": 0
+    },
+    "sig_m": 4,
+    "trust": {
+        "show_vendor_string": false,
+        "require_user_click": false,
+        "red_background": false,
+        "delay": 0
+    },
+    "pubkeys": [
+        "f70f2f846154835212d67cf1f793415188fc28aad6da9ed5cc9cfc02945dc76f",
+        "dbbca5c4b72b38404773e3cc51d1b949a72e2ffbe0e25633bf4f639417357834",
+        "cbff856acdefdf12485308291f94df1d3a2123a6df6ab23318299baf9058293c",
+        "10e45de99afb2faec95107d4dff035573c9c46637542bee6f1a5bb0fd2215066",
+        "8c299e213f85fe1a23374d8b6ab3b07d58a56640e6d90a3d8af79de9dbcf3a3e",
+        "6786543761361dc48636a18a89c9a3f9fbd4752d7f4832ba2caa66e965b21ef9",
+        "441db39f1ec9e957590a562360f9d264911c1f617c7162b26bc585186deeddf9"
+    ]
+}

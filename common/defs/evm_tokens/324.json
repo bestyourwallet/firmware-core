@@ -1,0 +1,12 @@
+{
+  "name": "zkSync Era",
+  "chain": "ZKSYNC",
+  "tokens": [
+    {
+      "name": "USD Coin",
+      "symbol": "USDC",
+      "address": "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4",
+      "decimals": 6
+    }
+  ]
+}

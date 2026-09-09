@@ -1,0 +1,6 @@
+SEGGER J-Link Remote Server V8.78 LogFile
+Logging started @ 2025-11-04 08:18
+00000000 - SERVER  (0x0015 bytes): Remote Server started
+00000000 - SERVER  (0x0015 bytes): TLV Protocol: V1.0.0 
+00000078 - SERVER  (0x0026 bytes): Connected to J-Link with S/N 150710345
+00000079 - SERVER  (0x0022 bytes): Waiting for client connections... 

@@ -1,0 +1,12 @@
+{
+  "name": "Ethereum Sepolia Testnet",
+  "chain": "SEPOLIA",
+  "tokens": [
+    {
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "address": "0xfb8E90F584e203157BE16acbBeADc5Ab6A6c8b03",
+      "decimals": 6
+    }
+  ]
+}

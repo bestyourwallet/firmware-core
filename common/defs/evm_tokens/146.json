@@ -1,0 +1,12 @@
+{
+  "name": "Sonic",
+  "chain": "SONIC",
+  "tokens": [
+    {
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "address": "0x6047828dc181963ba44974801ff68e538da5eaf9",
+      "decimals": 6
+    }
+  ]
+}

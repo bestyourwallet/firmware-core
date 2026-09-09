@@ -1,0 +1,18 @@
+{
+  "name": "Mantle",
+  "chain": "MNT",
+  "tokens": [
+    {
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "address": "0x201eba5cc46d216ce6dc03f6a759e8e766e956ae",
+      "decimals": 6
+    },
+    {
+      "name": "USD Coin",
+      "symbol": "USDC",
+      "address": "0x09bc4e0d864854c6afb6eb9a9cdf58ac190d0df9",
+      "decimals": 6
+    }
+  ]
+}

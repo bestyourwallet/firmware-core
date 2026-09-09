@@ -1,0 +1,30 @@
+{
+  "name": "EthereumPoW Mainnet",
+  "chain": "ETHW",
+  "rpc": [
+    "https://mainnet.ethereumpow.org"
+  ],
+  "faucets": [],
+  "nativeCurrency": {
+    "name": "EthereumPoW",
+    "symbol": "ETHW",
+    "decimals": 18
+  },
+  "infoURL": "https://ethereumpow.org",
+  "shortName": "ethw",
+  "chainId": 10001,
+  "networkId": 10001,
+  "icon": "ethw",
+  "explorers": [
+    {
+      "name": "ETHW Scan",
+      "url": "https://mainnet.ethwscan.com",
+      "standard": "EIP3091"
+    },
+    {
+      "name": "OKLink ETHW",
+      "url": "https://www.oklink.com/ethw",
+      "standard": "EIP3091"
+    }
+  ]
+}

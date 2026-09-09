@@ -1,0 +1,21 @@
+{
+    "header_len": 2560,
+    "text": "UKEY,FOR TEST ONLY",
+    "expiry": 0,
+    "version": {
+        "major": 0,
+        "minor": 0
+    },
+    "sig_m": 2,
+    "trust": {
+        "show_vendor_string": true,
+        "require_user_click": true,
+        "red_background": true,
+        "delay": 1
+    },
+    "pubkeys": [
+        "3452fee5f0454b1911ea86949f92f9ee5699fda21e2c989e84a5822110971276",
+        "96e9e1fa167e84778dc1ff1ac0ef630a90bef4f2e2f59cd558a3fbf4634afa74",
+        "f5eca3c84711e55644c249b20c70bdabfe31c52b90d02c57cbb757e52106f2a3"
+    ]
+}

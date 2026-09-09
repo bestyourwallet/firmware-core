@@ -1,0 +1,107 @@
+name: "build-core26"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-core26:
+    name: "Build Core26 (${{ matrix.artifact_suffix }})"
+    runs-on: ubuntu-latest
+    outputs:
+      firmware_version: ${{ steps.vars.outputs.firmware_version }}
+      boot_version: ${{ steps.vars.outputs.boot_version }}
+      short_hash: ${{ steps.vars.outputs.short_hash }}
+      build_date: ${{ steps.vars.outputs.build_date }}
+      artifacts_url: ${{ steps.vars.outputs.artifacts_url }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - production: 1
+            secret_key_1_name: "SECRET_KEY_1"
+            secret_key_2_name: "SECRET_KEY_2"
+            output_dir: prod
+            artifact_suffix: "prod"
+          - production: 0
+            secret_key_1_name: "SECRET_QA_KEY_1"
+            secret_key_2_name: "SECRET_QA_KEY_2"
+            output_dir: qa
+            artifact_suffix: "qa"
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v3
+
+      - name: Populate vars
+        id: vars
+        run: |
+          BOOT_VERSION=$(./tools/version.sh ./core/embed/bootloader/version.h)
+          FIRMWARE_VERSION=$(grep -E '#define UKEY_VERSION_(MAJOR|MINOR|PATCH)' ./core/embed/firmware/version.h | awk '{printf "%s.", $3}' | sed 's/\.$//')
+          BUILD_DATE=$(date +"%Y%m%d")
+          SHORT_HASH=$(git rev-parse --short HEAD)
+
+          echo "BOOT_VERSION=$BOOT_VERSION" >> $GITHUB_ENV
+          echo "FIRMWARE_VERSION=$FIRMWARE_VERSION" >> $GITHUB_ENV
+          echo "BUILD_DATE=$BUILD_DATE" >> $GITHUB_ENV
+          echo "SHORT_HASH=$SHORT_HASH" >> $GITHUB_ENV
+          ARTIFACTS_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          echo "ARTIFACTS_URL=${ARTIFACTS_URL}" >> $GITHUB_ENV
+
+          echo "firmware_version=$FIRMWARE_VERSION" >> $GITHUB_OUTPUT
+          echo "boot_version=$BOOT_VERSION" >> $GITHUB_OUTPUT
+          echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT
+          echo "build_date=$BUILD_DATE" >> $GITHUB_OUTPUT
+          echo "artifacts_url=$ARTIFACTS_URL" >> $GITHUB_OUTPUT
+
+      - name: "Build firmware"
+        env:
+          PRODUCTION: ${{ matrix.production }}
+          SECRET_1: ${{ secrets[matrix.secret_key_1_name] }}
+          SECRET_2: ${{ secrets[matrix.secret_key_2_name] }}
+        run: |
+          sh <(curl -L https://releases.nixos.org/nix/nix-2.23.3/install) --no-daemon
+          . $HOME/.nix-profile/etc/profile.d/nix.sh
+
+          nix-shell --run "poetry install"
+          git submodule update --init --recursive
+
+          nix-shell --run "poetry run make -C core build_boardloader"
+
+          if [ "$PRODUCTION" = "0" ]; then
+            nix-shell --run "poetry run make -C core build_boardloader_reflash_dev"
+          fi
+
+          nix-shell --run "poetry run make -C core build_bootloader"
+          nix-shell --run "poetry run make -C core build_firmware"
+
+          nix-shell --run "poetry run core/tools/headertool.py -h core/build/bootloader/core26.bootloader*Stable*.bin \
+            -S 1:$SECRET_1 -S 2:$SECRET_2"
+
+          nix-shell --run "poetry run core/tools/headertool.py -h core/build/firmware/core26*Stable*.bin \
+            -S 1:$SECRET_1 -S 2:$SECRET_2"
+
+          if [ "$PRODUCTION" = "0" ]; then
+            nix-shell --run "poetry run core/tools/headertool.py -h core/build/boardloader_reflash_dev/boardloader_reflash_dev.bin \
+              -S 1:$SECRET_1 -S 2:$SECRET_2"
+          fi
+
+          mkdir -p core/build/output/${{ matrix.output_dir }}
+
+          cp ./core/build/boardloader/boardloader.bin core/build/output/${{ matrix.output_dir }}
+
+          if [ "$PRODUCTION" = "0" ]; then
+            cp ./core/build/boardloader_reflash_dev/boardloader_reflash_dev.bin core/build/output/${{ matrix.output_dir }}
+          fi
+
+          cp ./core/build/bootloader/core26.bootloader*Stable*.bin core/build/output/${{ matrix.output_dir }}
+          tools/hash.py -t bootloader -f core/build/bootloader/bootloader.bin > core/build/output/${{ matrix.output_dir }}/bootloader_sha256.txt
+
+          cp ./core/build/firmware/core26*Stable*.bin core/build/output/${{ matrix.output_dir }}
+          tools/hash.py -t firmware -f core/build/firmware/core26.*.bin > core/build/output/${{ matrix.output_dir }}/firmware_sha256.txt
+
+      - name: "Upload Artifacts"
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.artifact_suffix }}-${{ env.SHORT_HASH }}
+          path: ./core/build/output/
+

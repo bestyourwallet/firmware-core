@@ -1,0 +1,24 @@
+{
+  "name": "Linea",
+  "chain": "LINEA",
+  "tokens": [
+    {
+      "name": "Linea",
+      "symbol": "LINEA",
+      "address": "0x1789e0043623282D5DCc7F213d703C6D8BAfBB04",
+      "decimals": 18
+    },
+    {
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "address": "0xa219439258ca9da29e9cc4ce5596924745e12b93",
+      "decimals": 6
+    },
+    {
+      "name": "Foxy",
+      "symbol": "FOXY",
+      "address": "0x5fbdf89403270a1846f5ae7d113a989f850d1566",
+      "decimals": 18
+    }
+  ]
+}

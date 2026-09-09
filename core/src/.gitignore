@@ -1,0 +1,3 @@
+trezor.config
+perf.*
+random_key.py

@@ -1,0 +1,12 @@
+{
+  "name": "Ethereum Classic",
+  "chain": "ETC",
+  "tokens": [
+    {
+      "name": "HEBE",
+      "symbol": "HEBE",
+      "address": "0x88d8c3dc6b5324f34e8cf229a93e197048671abd",
+      "decimals": 18
+    }
+  ]
+}

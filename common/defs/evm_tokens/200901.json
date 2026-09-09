@@ -1,0 +1,12 @@
+{
+  "name": "Bitlayer",
+  "chain": "BITLAYER",
+  "tokens": [
+    {
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "address": "0xfe9f969faf8ad72a83b761138bf25de87eff9dd2",
+      "decimals": 6
+    }
+  ]
+}

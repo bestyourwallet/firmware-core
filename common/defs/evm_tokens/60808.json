@@ -1,0 +1,12 @@
+{
+  "name": "BOB",
+  "chain": "BOB",
+  "tokens": [
+    {
+      "name": "Bridged USDC",
+      "symbol": "USDC.e",
+      "address": "0xe75D0fB2C24A55cA1e3F96781a2bCC7bdba058F0",
+      "decimals": 6
+    }
+  ]
+}

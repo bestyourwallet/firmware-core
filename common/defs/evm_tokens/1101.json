@@ -1,0 +1,12 @@
+{
+  "name": "Polygon Zkevm",
+  "chain": "ZKEVM",
+  "tokens": [
+    {
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "address": "0x1e4a5963abfd975d8c9021ce480b42188849d41d",
+      "decimals": 6
+    }
+  ]
+}

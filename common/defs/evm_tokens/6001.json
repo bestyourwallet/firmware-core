@@ -1,0 +1,12 @@
+{
+  "name": "BounceBit",
+  "chain": "BB",
+  "tokens": [
+    {
+      "name": "BounceBit BTC",
+      "symbol": "BBTC",
+      "address": "0xac9e18bf5bc1d38fc154731d54f30c336e0f9694",
+      "decimals": 8
+    }
+  ]
+}

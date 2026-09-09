@@ -1,0 +1,18 @@
+{
+  "name": "Scroll",
+  "chain": "SCROLL",
+  "tokens": [
+    {
+      "name": "Tether USD",
+      "symbol": "USDT",
+      "address": "0xf55BEC9cafDbE8730f096Aa55dad6D22d44099Df",
+      "decimals": 6
+    },
+    {
+      "name": "Wrapped eETH",
+      "symbol": "weETH",
+      "address": "0x01f0a31698c4d065659b9bdc21b3610292a1c506",
+      "decimals": 18
+    }
+  ]
+}
