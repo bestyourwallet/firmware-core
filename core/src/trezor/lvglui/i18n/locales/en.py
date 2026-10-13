@@ -1115,4 +1115,8 @@ translations = [
     "You can keep the current {} PIN or set a new 6-digit PIN. You will need this PIN when restoring its backup.",
     "Keep Current PIN",
     "Enter New {} PIN",
+    "NEAR contract call",
+    "Unknown contract",
+    "Attached NEAR:",
+    "This transfer also calls the receiving contract. Review its message before signing.",
 ]

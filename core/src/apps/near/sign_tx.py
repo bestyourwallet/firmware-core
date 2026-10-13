@@ -30,8 +30,9 @@ async def sign_tx(
         raise wire.DataError(f"Invalid message {e}")
 
     token_action = tx.get_token_transfer_action()
+    action = tx.action if len(tx.actions) == 1 else None
 
-    if tx.action and tx.action.action_type == Action_Transfer:
+    if action is not None and action.action_type == Action_Transfer:
         from trezor.ui.layouts.lvgl import confirm_near_transfer
         from trezor.strings import format_amount
 
@@ -39,7 +40,7 @@ async def sign_tx(
             ctx,
             tx.signerId,
             tx.receiverId,
-            format_amount(tx.action.amount, 24) + " NEAR",
+            format_amount(action.amount, 24) + " NEAR",
         )
     elif token_action is not None:
         from trezor.strings import format_amount
@@ -50,13 +51,23 @@ async def sign_tx(
             symbol, decimals = token_info
             amount = f"{format_amount(token_action.token_amount, decimals)} {symbol}"
         else:
-            amount = f"{token_action.token_amount} {tx.receiverId}"
+            from trezor.lvglui.i18n import gettext as _, keys as i18n_keys
+
+            amount = _(i18n_keys.FORMAT__BASE_UNITS).format(token_action.token_amount)
 
         await confirm_near_transfer(
             ctx,
             tx.signerId,
             token_action.token_receiver_id,
             amount,
+            contract=tx.receiverId,
+            method_name=token_action.method_name,
+            deposit=format_amount(token_action.deposit, 24) + " NEAR",
+            gas=str(token_action.gas),
+            unknown_contract=token_info is None,
+            deposit_nonzero=token_action.deposit != 0,
+            memo=token_action.token_memo,
+            msg=token_action.token_msg,
         )
     else:
         from trezor.ui.layouts.lvgl import confirm_blind_sign_common

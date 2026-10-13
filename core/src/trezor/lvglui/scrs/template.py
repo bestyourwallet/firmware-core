@@ -3547,6 +3547,12 @@ class TransactionDetailsNear(FullSizeWindow):
         primary_color,
         icon_path,
         striped=False,
+        contract=None,
+        method_name=None,
+        deposit=None,
+        gas=None,
+        unknown_contract=False,
+        deposit_nonzero=False,
     ):
         super().__init__(
             title,
@@ -3559,6 +3565,17 @@ class TransactionDetailsNear(FullSizeWindow):
             button_layout=1,
         )
         self.container = ContainerFlexCol(self.content_area, self.title, pos=(0, 40))
+
+        if unknown_contract:
+            self.warning_banner = Banner(
+                self.container, BannerType.Warning, _(i18n_keys.TITLE__UNKNOWN_CONTRACT)
+            )
+        if method_name == "ft_transfer_call":
+            self.call_warning = Banner(
+                self.container,
+                BannerType.Warning,
+                _(i18n_keys.CONTENT__NEAR_TRANSFER_CALL),
+            )
 
         if striped:
             self.group_amounts = ContainerFlexCol(
@@ -3575,6 +3592,32 @@ class TransactionDetailsNear(FullSizeWindow):
                 amount,
             )
             # self.group_amounts.add_dummy()
+        if contract is not None:
+            self.group_contract = ContainerFlexCol(
+                self.container, None, padding_row=0, no_align=True
+            )
+            self.item_contract = DisplayItem(
+                self.group_contract, _(i18n_keys.LIST_KEY__CONTRACT__COLON), contract
+            )
+            self.item_contract.label.set_recolor(False)
+            self.item_method = DisplayItem(
+                self.group_contract, _(i18n_keys.LIST_KEY__FUNCTION__COLON), method_name
+            )
+            self.item_deposit = DisplayItem(
+                self.group_contract,
+                _(i18n_keys.LIST_KEY__ATTACHED_NEAR__COLON),
+                deposit,
+            )
+            if deposit_nonzero:
+                self.item_deposit.label.add_style(
+                    StyleWrapper()
+                    .text_color(lv_theme.BANNER_STYLE[BannerType.Warning][0])
+                    .text_font(font_GeistSemiBold26),
+                    0,
+                )
+            self.item_gas = DisplayItem(
+                self.group_contract, _(i18n_keys.LIST_KEY__GAS_LIMIT__COLON), gas
+            )
         self.group_directions = ContainerFlexCol(
             self.container, None, padding_row=0, no_align=True
         )
@@ -3593,6 +3636,9 @@ class TransactionDetailsNear(FullSizeWindow):
             _(i18n_keys.LIST_KEY__FROM__COLON),
             address_from,
         )
+        if contract is not None:
+            self.item_group_body_to_addr.label.set_recolor(False)
+            self.item_group_body_from_addr.label.set_recolor(False)
         # self.group_directions.add_dummy()
 
         # self.content_area.set_style_min_height(660, 0)
