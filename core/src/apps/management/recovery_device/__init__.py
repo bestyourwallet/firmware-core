@@ -78,7 +78,8 @@ async def recovery_device(
                 newpin = await request_pin_confirm(
                     ctx, allow_cancel=False, nav_back=False
                 )
-                config.change_pin("", newpin, None, None)
+                if not config.change_pin("", newpin, None, None):
+                    raise wire.ProcessError("Failed to set PIN")
             # if not __debug__:
             await fingerprints.request_add_fingerprint()
             storage.device.set_passphrase_enabled(bool(msg.passphrase_protection))
