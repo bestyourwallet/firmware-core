@@ -1115,4 +1115,8 @@ translations = [
     "Sie können die aktuelle {}-PIN beibehalten oder eine neue 6-stellige PIN festlegen. Sie benötigen diese PIN zur Wiederherstellung der Sicherung.",
     "Aktuelle PIN beibehalten",
     "Neue {}-PIN eingeben",
+    "NEAR-Vertragsaufruf",
+    "Unbekannter Vertrag",
+    "Angehängte NEAR:",
+    "Diese Übertragung ruft auch den Empfängervertrag auf. Prüfen Sie die Nachricht vor dem Signieren.",
 ]

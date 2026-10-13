@@ -1115,4 +1115,8 @@ translations = [
     "Puedes conservar el PIN actual de {} o configurar uno nuevo de 6 dígitos. Necesitarás este PIN para restaurar su copia de seguridad.",
     "Conservar PIN actual",
     "Introducir nuevo PIN de {}",
+    "Llamada a contrato NEAR",
+    "Contrato desconocido",
+    "NEAR adjunto:",
+    "Esta transferencia también llama al contrato receptor. Revise el mensaje antes de firmar.",
 ]

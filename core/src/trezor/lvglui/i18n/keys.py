@@ -2472,3 +2472,12 @@ CONTENT__CHANGE_BACKUP_DEVICE_PIN = 1112
 BUTTON__KEEP_CURRENT_PIN = 1113
 # Enter New {} PIN
 TITLE__ENTER_NEW_BACKUP_DEVICE_PIN = 1114
+
+# NEAR contract call
+TITLE__NEAR_CONTRACT_CALL = 1115
+# Unknown contract
+TITLE__UNKNOWN_CONTRACT = 1116
+# Attached NEAR:
+LIST_KEY__ATTACHED_NEAR__COLON = 1117
+# This transfer also calls the receiving contract. Review its message before signing.
+CONTENT__NEAR_TRANSFER_CALL = 1118

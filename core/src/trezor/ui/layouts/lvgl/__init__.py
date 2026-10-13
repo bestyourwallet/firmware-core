@@ -2995,13 +2995,26 @@ async def confirm_near_transfer(
     sender: str,
     receiver: str,
     amount: str,
+    *,
+    contract: str | None = None,
+    method_name: str | None = None,
+    deposit: str | None = None,
+    gas: str | None = None,
+    unknown_contract: bool = False,
+    deposit_nonzero: bool = False,
+    memo: str | None = None,
+    msg: str | None = None,
 ) -> None:
     from trezor.lvglui.scrs.template import TransactionDetailsNear
     from trezor.strings import strip_amount
 
-    striped_amount, striped = strip_amount(amount)
-    title = _(i18n_keys.TITLE__SEND_MULTILINE).format(striped_amount)
-    if await should_show_details(ctx, receiver, title):
+    if contract is None:
+        striped_amount, striped = strip_amount(amount)
+        title = _(i18n_keys.TITLE__SEND_MULTILINE).format(striped_amount)
+    else:
+        title = _(i18n_keys.TITLE__NEAR_CONTRACT_CALL)
+        striped = True
+    if contract is not None or await should_show_details(ctx, receiver, title):
         screen = TransactionDetailsNear(
             title,
             sender,
@@ -3010,10 +3023,44 @@ async def confirm_near_transfer(
             ctx.primary_color,
             ctx.icon_path,
             striped=striped,
+            contract=contract,
+            method_name=method_name,
+            deposit=deposit,
+            gas=gas,
+            unknown_contract=unknown_contract,
+            deposit_nonzero=deposit_nonzero,
         )
         await raise_if_cancelled(
             interact(ctx, screen, "near_transfer", ButtonRequestType.ProtectCall)
         )
+
+    if contract is not None:
+        import ujson as json
+
+        from trezor.lvglui.scrs import lv
+        from trezor.lvglui.scrs.components.pageable import PageAbleMessage
+
+        fields = []
+        if memo is not None:
+            fields.append((_(i18n_keys.LIST_KEY__MEMO__COLON), memo))
+        if method_name == "ft_transfer_call":
+            fields.append((_(i18n_keys.TITLE__MESSAGE), msg))
+        for field_title, value in fields:
+            # Quote strings so control characters cannot hide signed content.
+            content = (
+                _(i18n_keys.SUBTITLE__NO_MESSAGE_FIELD)
+                if value is None
+                else json.dumps(value)
+            )
+            page = PageAbleMessage(
+                field_title, content, None, primary_color=ctx.primary_color
+            )
+            # Exit through Reject so the confirmation always returns a result.
+            page.nav_back.add_flag(lv.obj.FLAG.HIDDEN)
+            page.message.set_recolor(False)
+            await raise_if_cancelled(
+                interact(ctx, page, "near_call_message", ButtonRequestType.ProtectCall)
+            )
 
 
 async def confirm_safe_tx(
