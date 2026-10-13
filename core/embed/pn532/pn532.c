@@ -130,7 +130,7 @@ static bool pn532_read_ack(pn532_controller_t* pn532)
 static bool pn532_read_frame(pn532_controller_t* pn532, pn532_frame_t* frame)
 {
     uint8_t cmd = PN532_SPI_DATAREAD;
-    uint8_t index = 0;
+    uint16_t index = 0;
     bool ret = false;
     pn532->spi_controller->chip_select(true);
     pn532->spi_controller->write(&cmd, 1);
@@ -145,7 +145,7 @@ static bool pn532_read_frame(pn532_controller_t* pn532, pn532_frame_t* frame)
     pn532->spi_controller->read(frame->raw + index, 2);
     index += 2;
 
-    if ( frame->len > PN532_FRAME_DATA_MAX_LENGTH )
+    if ( frame->len < 2 || frame->len > PN532_FRAME_DATA_MAX_LENGTH )
     {
         goto exit;
     }
@@ -325,6 +325,12 @@ bool pn532_inDataExchange(
     uint8_t* send_data, uint8_t send_data_length, uint8_t* response, uint16_t* response_length
 )
 {
+    if ( response == NULL || response_length == NULL )
+    {
+        return false;
+    }
+    uint16_t capacity = *response_length;
+    *response_length = 0;
     uint8_t buffer[PN532_FRAME_DATA_MAX_LENGTH] = {0};
     uint16_t recv_len = sizeof(buffer);
     if ( send_data_length > PN532_FRAME_DATA_MAX_LENGTH - 1 )
@@ -340,12 +346,20 @@ bool pn532_inDataExchange(
     {
         return false;
     }
-    if ( buffer[0] != 0x00 )
+    if ( recv_len < 1 || buffer[0] != 0x00 )
     {
         return false;
     }
-    memmove(response, buffer + 1, recv_len - 1);
-    *response_length = recv_len - 1;
+    uint16_t actual_data_len = recv_len - 1;
+    if ( actual_data_len > capacity )
+    {
+        return false;
+    }
+    if ( actual_data_len > 0 )
+    {
+        memmove(response, buffer + 1, actual_data_len);
+    }
+    *response_length = actual_data_len;
     return true;
 }
 
@@ -353,6 +367,12 @@ bool pn532_InCommunicateThru(
     uint8_t* send_data, uint8_t send_data_length, uint8_t* response, uint16_t* response_length
 )
 {
+    if ( response == NULL || response_length == NULL )
+    {
+        return false;
+    }
+    uint16_t capacity = *response_length;
+    *response_length = 0;
     uint8_t buffer[PN532_FRAME_DATA_MAX_LENGTH] = {0};
     uint16_t recv_len = sizeof(buffer);
     if ( send_data_length > PN532_FRAME_DATA_MAX_LENGTH )
@@ -372,6 +392,10 @@ bool pn532_InCommunicateThru(
         return false;
     }
     uint16_t actual_data_len = recv_len - 1;
+    if ( actual_data_len > capacity )
+    {
+        return false;
+    }
     if ( actual_data_len > 0 )
     {
         memmove(response, buffer + 1, actual_data_len);
