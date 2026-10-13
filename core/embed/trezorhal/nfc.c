@@ -34,6 +34,11 @@ bool nfc_send_recv(
         return false;
     }
 
+    if ( *response_len < 2 )
+    {
+        *response_len = 0;
+        return false;
+    }
     if ( sw1sw2 != NULL )
     {
         sw1sw2[0] = response[*response_len - 2];

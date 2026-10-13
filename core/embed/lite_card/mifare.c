@@ -119,7 +119,7 @@ static uint16_t mnemonic_crc16(const uint8_t* data, uint16_t len) {
 
 static int get_mnemonic_length(uint16_t* total_len) {
   uint8_t first_page[4] = {0};
-  uint16_t resp_len = 0;
+  uint16_t resp_len = sizeof(first_page);
 
   if (total_len == NULL) {
     return false;
@@ -339,7 +339,9 @@ static uint8_t mifare_write(uint8_t page, const uint8_t* data) {
     cmd_ctr++;
   } else {
     uint8_t cmd[6] = {CMD_WRITE, page, data[0], data[1], data[2], data[3]};
-    if (!pn532_inDataExchange(cmd, sizeof(cmd), NULL, 0)) {
+    uint8_t response[1];
+    uint16_t response_len = sizeof(response);
+    if (!pn532_inDataExchange(cmd, sizeof(cmd), response, &response_len)) {
       return false;
     }
   }
@@ -358,6 +360,9 @@ static uint8_t mifare_write(uint8_t page, const uint8_t* data) {
  */
 static int __attribute__((unused))
 mifare_read(uint8_t page, uint8_t* response_data, uint16_t* response_len) {
+  if (response_data == NULL || response_len == NULL) {
+    return false;
+  }
   if (cmac_session_active) {
     uint8_t cmd[2 + CMAC_TAG_SIZE];
     cmd[0] = CMD_READ;
@@ -383,6 +388,11 @@ mifare_read(uint8_t page, uint8_t* response_data, uint16_t* response_len) {
 
     cmd_ctr++;
     uint16_t data_len = full_resp_len - CMAC_TAG_SIZE;
+    if (data_len > *response_len) {
+      cmac_session_active = false;
+      *response_len = 0;
+      return false;
+    }
     full_resp[0] = cmd_ctr & 0xFF;
     full_resp[1] = (cmd_ctr >> 8) & 0xFF;
 
@@ -419,8 +429,17 @@ mifare_read(uint8_t page, uint8_t* response_data, uint16_t* response_len) {
  */
 static int mifare_fast_read(uint8_t sta_page, uint8_t end_page,
                             uint8_t* response, uint16_t* response_len) {
+  if (response == NULL || response_len == NULL) {
+    return false;
+  }
+  uint16_t capacity = *response_len;
+  *response_len = 0;
   if (end_page < sta_page || sta_page < MIFARE_START_PAGE ||
       end_page > MIFARE_END_PAGE) {
+    return false;
+  }
+  uint16_t expected_len = (end_page - sta_page + 1) * 4;
+  if (expected_len > capacity) {
     return false;
   }
   if (cmac_session_active) {
@@ -449,6 +468,10 @@ static int mifare_fast_read(uint8_t sta_page, uint8_t end_page,
 
     cmd_ctr++;
     uint16_t data_len = full_resp_len - CMAC_TAG_SIZE;
+    if (data_len != expected_len || data_len > capacity) {
+      cmac_session_active = false;
+      return false;
+    }
     full_resp[0] = cmd_ctr & 0xFF;
     full_resp[1] = (cmd_ctr >> 8) & 0xFF;
 
@@ -465,10 +488,12 @@ static int mifare_fast_read(uint8_t sta_page, uint8_t end_page,
     cmd_ctr++;
   } else {
     uint8_t cmd[3] = {CMD_FAST_READ, sta_page, end_page};
-    if (pn532_InCommunicateThru(cmd, sizeof(cmd), response, response_len) !=
-        true) {
+    uint16_t data_len = capacity;
+    if (pn532_InCommunicateThru(cmd, sizeof(cmd), response, &data_len) != true ||
+        data_len != expected_len) {
       return false;
     }
+    *response_len = data_len;
   }
   return true;
 }
@@ -498,7 +523,7 @@ int get_version(uint8_t* version) {
  */
 int protection_settings(uint8_t mode) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x2A, 0x2A, response_data, &response_len) != true) {
     return false;
   }
@@ -548,7 +573,7 @@ int set_aes_attempts(uint16_t max_attempts) {
     return false;
   }
   uint8_t response_data[16] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x2A, 0x2A, response_data, &response_len) != 0) {
     return false;
   }
@@ -567,7 +592,7 @@ int set_aes_attempts(uint16_t max_attempts) {
  */
 int set_random_id(uint8_t enable) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x29, 0x29, response_data, &response_len) != true) {
     return false;
   }
@@ -591,7 +616,7 @@ int set_aes_protection(uint8_t start_page, bool enable) {
     return false;
   }
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x29, 0x29, response_data, &response_len) != true) {
     return false;
   }
@@ -610,7 +635,7 @@ int set_aes_protection(uint8_t start_page, bool enable) {
  */
 int set_memory_protection(uint8_t restrict_read_and_write) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x2A, 0x2A, response_data, &response_len) != true) {
     return false;
   }
@@ -628,7 +653,7 @@ int set_memory_protection(uint8_t restrict_read_and_write) {
  */
 int set_counter_inc_unauth_allowed(uint8_t enable) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x2A, 0x2A, response_data, &response_len) != true) {
     return false;
   }
@@ -649,7 +674,7 @@ int set_counter_read_unauth_allowed(uint8_t enable) {
     return false;
   }
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x2A, 0x2A, response_data, &response_len) != true) {
     return false;
   }
@@ -667,7 +692,7 @@ int set_counter_read_unauth_allowed(uint8_t enable) {
  */
 int set_vctid(uint8_t vctid_value) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x2A, 0x2A, response_data, &response_len) != true) {
     return false;
   }
@@ -691,7 +716,7 @@ int set_auth_limit(uint16_t limit, uint8_t enable) {
     limit = 0;
   }
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x2A, 0x2A, response_data, &response_len) != true) {
     return false;
   }
@@ -713,7 +738,7 @@ int set_secure_messaging(uint8_t enable) {
     return false;
   }
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x29, 0x29, response_data, &response_len) != true) {
     return false;
   }
@@ -730,7 +755,7 @@ int set_secure_messaging(uint8_t enable) {
  */
 int lock_aes_key0(void) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x2D, 0x2D, response_data, &response_len) != true) {
     return false;
   }
@@ -747,7 +772,7 @@ int lock_aes_key0(void) {
  */
 int lock_aes_key1(void) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x2D, 0x2D, response_data, &response_len) != true) {
     return false;
   }
@@ -764,7 +789,7 @@ int lock_aes_key1(void) {
  */
 int lock_key_configuration(void) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x2D, 0x2D, response_data, &response_len) != true) {
     return false;
   }
@@ -781,7 +806,7 @@ int lock_key_configuration(void) {
  */
 int lock_user_configuration(void) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(0x2A, 0x2A, response_data, &response_len) != true) {
     return false;
   }
@@ -965,7 +990,7 @@ int lock_signature(void) { return false; }
 uint8_t read_nick_name(char* nick_name) {
   uint8_t nick_name_buffer[(NICKNAME_END_PAGE - NICKNAME_START_PAGE + 1) * 4] =
       {0};
-  uint16_t read_len = 0;
+  uint16_t read_len = sizeof(nick_name_buffer);
   if (mifare_fast_read(NICKNAME_START_PAGE, NICKNAME_END_PAGE, nick_name_buffer,
                        &read_len) != true) {
     printf("read_nick_name mifare_fast_read failed\n");
@@ -1026,7 +1051,7 @@ int read_mnemonic(uint8_t* buffer, uint16_t* out_len) {
   uint8_t end_page = MNEMONIC_START_PAGE + pages - 1;
 
   uint8_t temp[48] = {0};
-  uint16_t temp_len = 0;
+  uint16_t temp_len = sizeof(temp);
 
   if (mifare_fast_read(MNEMONIC_START_PAGE, end_page, temp, &temp_len) !=
       true) {
@@ -1065,7 +1090,7 @@ int has_mnemonic(uint8_t* has_data) {
   }
 
   uint8_t temp[48] = {0};
-  uint16_t temp_len = 0;
+  uint16_t temp_len = sizeof(temp);
   uint8_t pages = (total_len + 3) / 4;
   uint8_t end_page = MNEMONIC_START_PAGE + pages - 1;
 
@@ -1119,7 +1144,7 @@ int write_mnemonic(const uint8_t* buffer, uint8_t buffer_len) {
 
 uint8_t set_remaining_retry(uint8_t retry) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(PUBLIC_PAGE, PUBLIC_PAGE, response_data, &response_len) != true) {
     return false;
   }
@@ -1132,7 +1157,7 @@ uint8_t set_remaining_retry(uint8_t retry) {
 
 uint8_t get_remaining_retry(uint8_t* retry) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(PUBLIC_PAGE, PUBLIC_PAGE, response_data, &response_len) != true) {
     return false;
   }
@@ -1142,7 +1167,7 @@ uint8_t get_remaining_retry(uint8_t* retry) {
 
 uint8_t remaining_retry_decrement(void) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(PUBLIC_PAGE, PUBLIC_PAGE, response_data, &response_len) != true) {
     return false;
   }
@@ -1158,7 +1183,7 @@ uint8_t remaining_retry_decrement(void) {
 
 uint8_t reset_remaining_retry(void) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(PUBLIC_PAGE, PUBLIC_PAGE, response_data, &response_len) != true) {
     return false;
   }
@@ -1171,7 +1196,7 @@ uint8_t reset_remaining_retry(void) {
 
 uint8_t is_card_initialized(uint8_t* initialized) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(PUBLIC_PAGE, PUBLIC_PAGE, response_data, &response_len) != true) {
     return false;
   }
@@ -1180,7 +1205,7 @@ uint8_t is_card_initialized(uint8_t* initialized) {
 }
 uint8_t set_new_tag(uint8_t tag) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(PUBLIC_PAGE, PUBLIC_PAGE, response_data, &response_len) != true) {
     return false;
   }
@@ -1193,7 +1218,7 @@ uint8_t set_new_tag(uint8_t tag) {
 
 uint8_t is_card_new(uint8_t* is_new) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(PUBLIC_PAGE, PUBLIC_PAGE, response_data, &response_len) != true) {
     return false;
   }
@@ -1203,7 +1228,7 @@ uint8_t is_card_new(uint8_t* is_new) {
 
 int get_model(int* model) {
   uint8_t response_data[4] = {0};
-  uint16_t response_len = 0;
+  uint16_t response_len = sizeof(response_data);
   if (mifare_fast_read(INFO_PAGE, INFO_PAGE, response_data, &response_len) != true) {
     return false;
   }
