@@ -20,6 +20,7 @@ async def load_device(ctx: wire.Context, msg: LoadDevice) -> Success:
 
     identifier = None
     iteration_exponent = None
+    slip39_params: tuple[int, bool, int] | None = None
     if not is_slip39:  # BIP-39
         secret = msg.mnemonics[0].encode()
         backup_type = BackupType.Bip39
@@ -31,6 +32,14 @@ async def load_device(ctx: wire.Context, msg: LoadDevice) -> Success:
         # this must succeed if the recover_ems call succeeded
         share = slip39.decode_mnemonic(msg.mnemonics[0])
         backup_type = backup_types.infer_backup_type(is_slip39, share)
+        slip39_params = (identifier, extendable, iteration_exponent)
+
+    if msg.pin:
+        if not config.change_pin("", msg.pin, None, None):
+            raise wire.ProcessError("Failed to set PIN")
+
+    if slip39_params is not None:
+        identifier, extendable, iteration_exponent = slip39_params
         if not extendable:
             storage.device.set_slip39_identifier(identifier)
         storage.device.set_slip39_iteration_exponent(iteration_exponent)
@@ -45,8 +54,6 @@ async def load_device(ctx: wire.Context, msg: LoadDevice) -> Success:
     )
     storage.device.set_passphrase_enabled(bool(msg.passphrase_protection))
     storage.device.set_label(msg.label or "")
-    if msg.pin:
-        config.change_pin("", msg.pin, None, None)
 
     return Success(message="Device loaded")
 
