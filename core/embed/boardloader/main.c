@@ -819,8 +819,13 @@ int main(void) {
 
   if (boot_target == BOOT_TARGET_BOARDLOADER) {
     if (stay_reason == STAY_REASON_UPDATE_NEXT_TARGET) {
-      try_bootloader_update(true, true);
-    } else {
+      if (sectrue != try_bootloader_update(true, true)) {
+        emmc_fs_file_delete("0:updates/bootloader.bin");
+        emmc_fs_file_delete("0:boot/bootloader.bin");
+        stay_reason = STAY_REASON_INVALID_NEXT_TARGET;
+      }
+    }
+    if (stay_reason != STAY_REASON_UPDATE_NEXT_TARGET) {
       display_boardloader_title("USB Mass Storage Mode\n", stay_reason);
 
       char serial[USB_SIZ_STRING_SERIAL];
