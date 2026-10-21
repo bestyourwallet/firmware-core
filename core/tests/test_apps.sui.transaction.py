@@ -86,6 +86,21 @@ def _simple_sui_transfer() -> bytes:
     return INTENT_BYTES + b"\x00" + tx_v1
 
 
+def _simple_token_transfer(object_byte: int) -> bytes:
+    inputs = (
+        _object_input(object_byte)
+        + _pure_input(_u64(123456789))
+        + _pure_input(_address(0x66))
+    )
+    split_coins = b"\x02" + _arg_input(0) + _uleb(1) + _arg_input(1)
+    transfer_objects = (
+        b"\x01" + _uleb(1) + _arg_nested_result(0, 0) + _arg_input(2)
+    )
+    ptb = _uleb(3) + inputs + _uleb(2) + split_coins + transfer_objects
+    gas_payment = _uleb(1) + _object_ref(0xAA) + _address(0x11) + _u64(1000) + _u64(5000)
+    return INTENT_BYTES + b"\x00\x00" + ptb + _address(0x11) + gas_payment + b"\x00"
+
+
 def _token_transfer_with_hidden_object_transfer() -> bytes:
     inputs = b"".join(
         [
@@ -179,7 +194,7 @@ class TestSuiTransaction(unittest.TestCase):
         )
         self.assertEqual(transfer.amount, "0.01 SUI")
 
-    def test_parse_user_standard_sui_token_transfer(self):
+    def test_unresolved_user_token_transfer_requires_blind_signing(self):
         tx = Transaction.deserialize(_user_standard_sui_token_transfer())
         transfer = _match_sui_transfer(tx.kind)
 
@@ -191,13 +206,13 @@ class TestSuiTransaction(unittest.TestCase):
         self.assertEqual(tx.gas_payment.price, 100)
         self.assertEqual(tx.gas_payment.budget, 200000)
         self.assertEqual(tx.gas_payment.max_fee, "0.0002 SUI")
-        self.assertEqual(
-            transfer.recipient,
-            "0x0d7f78a1d41ebfa4ea966d8fbbf4f7b63c990a99c24e084dc7738eb548ac20a6",
-        )
-        self.assertEqual(transfer.amount, "10000 units")
-        self.assertEqual(transfer.tx_type, "Token Transfer")
-        self.assertEqual(transfer.token, "Unknown Token")
+        self.assertIsNone(transfer)
+
+    def test_unresolved_source_objects_require_blind_signing(self):
+        for object_byte in (0x11, 0x22):
+            tx = Transaction.deserialize(_simple_token_transfer(object_byte))
+            self.assertEqual(tx.kind.inputs[0].value.object_id, _address_str(object_byte))
+            self.assertIsNone(_match_sui_transfer(tx.kind))
 
     def test_reject_sui_transfer_with_hidden_object_transfer(self):
         tx = Transaction.deserialize(_sui_transfer_with_hidden_object_transfer())
