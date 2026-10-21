@@ -405,12 +405,15 @@ class OverviewComponent:
         approve_spender: str | None = None,
         max_fee: str | None = None,
         token_address: str | None = None,
+        expiration: str | None = None,
     ):
         self.parent = parent
         self.title = title or _(i18n_keys.OVERVIEW)
         self.icon = icon or theme_path_png("group-icon-more")
 
-        has_content = any([to_address, approve_spender, token_address, max_fee])
+        has_content = any(
+            [to_address, approve_spender, token_address, max_fee, expiration]
+        )
 
         if not has_content:
             return
@@ -434,6 +437,11 @@ class OverviewComponent:
 
         if max_fee:
             DisplayItem(self.group, _(i18n_keys.LIST_KEY__MAXIMUM_FEE__COLON), max_fee)
+
+        if expiration:
+            DisplayItem(
+                self.group, _(i18n_keys.LIST_KEY__EXPIRATION__COLON), expiration
+            )
 
         if token_address:
             DisplayItem(

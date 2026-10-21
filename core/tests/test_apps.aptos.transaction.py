@@ -1,7 +1,12 @@
 from common import *
 
 if not utils.BITCOIN_ONLY:
-    from apps.aptos.transaction import AptosDecodeError, Transaction, _match_transfer
+    from apps.aptos.transaction import (
+        AptosDecodeError,
+        Transaction,
+        _format_expiration,
+        _match_transfer,
+    )
 
 
 def _uleb(value: int) -> bytes:
@@ -69,14 +74,14 @@ def _entry_payload(
     )
 
 
-def _raw_tx(payload: bytes) -> bytes:
+def _raw_tx(payload: bytes, expiration: int = 1710000000) -> bytes:
     return (
         _address(0x11)
         + _u64(7)
         + payload
         + _u64(2000)
         + _u64(100)
-        + _u64(1710000000)
+        + _u64(expiration)
         + b"\x04"
     )
 
@@ -184,6 +189,27 @@ class TestAptosTransaction(unittest.TestCase):
 
         self.assertEqual(tx.secondary_signers, ["0x" + "66" * 32])
         self.assertEqual(tx.fee_payer, "0x" + "77" * 32)
+
+    def test_expiration_preserves_signed_value(self):
+        payload = _entry_payload(
+            "aptos_account", "transfer", [], [_address(0x22), _u64(1)]
+        )
+        for expiration in (0, 1710000000, 1910000000, 0xFFFFFFFFFFFFFFFF):
+            tx = Transaction.deserialize(_raw_tx(payload, expiration), 0)
+            self.assertEqual(tx.expiration_timestamp_secs, expiration)
+
+    def test_format_expiration_utc(self):
+        self.assertEqual(_format_expiration(0), "1970-01-01 00:00:00 UTC")
+        self.assertEqual(_format_expiration(1710000000), "2024-03-09 16:00:00 UTC")
+        self.assertEqual(_format_expiration(1910000000), "2030-07-11 11:33:20 UTC")
+
+    def test_format_expiration_outside_device_calendar_range(self):
+        limit = 946684800 + 0x7FFFFFFF
+        self.assertEqual(_format_expiration(limit), "2068-01-19 03:14:07 UTC")
+        self.assertEqual(_format_expiration(limit + 1), "3094168448 (Unix)")
+        self.assertEqual(
+            _format_expiration(0xFFFFFFFFFFFFFFFF), "18446744073709551615 (Unix)"
+        )
 
     def test_reject_trailing_data(self):
         raw_tx = _raw_tx(

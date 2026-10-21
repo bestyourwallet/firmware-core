@@ -913,6 +913,7 @@ class TransactionOverviewNew(FullSizeWindow):
             "approve_spender",
             "max_fee",
             "token_address",
+            "expiration",
         }
 
         return {
@@ -5851,6 +5852,7 @@ class AptosTransfer(FullSizeWindow):
         primary_color,
         icon_path,
         striped=False,
+        expiration=None,
     ):
         super().__init__(
             title,
@@ -5931,6 +5933,12 @@ class AptosTransfer(FullSizeWindow):
             _(i18n_keys.FORM__MORE),
             theme_path_png("group-icon-more"),
         )
+        if expiration:
+            self.item_group_body_expiration = DisplayItem(
+                self.group_more,
+                _(i18n_keys.LIST_KEY__EXPIRATION__COLON),
+                expiration,
+            )
         if token:
             self.item_group_body_token = DisplayItem(
                 self.group_more,

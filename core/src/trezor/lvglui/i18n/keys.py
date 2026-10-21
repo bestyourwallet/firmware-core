@@ -2481,3 +2481,5 @@ TITLE__UNKNOWN_CONTRACT = 1116
 LIST_KEY__ATTACHED_NEAR__COLON = 1117
 # This transfer also calls the receiving contract. Review its message before signing.
 CONTENT__NEAR_TRANSFER_CALL = 1118
+# Expiration:
+LIST_KEY__EXPIRATION__COLON = 1119
