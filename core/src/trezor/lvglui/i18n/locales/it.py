@@ -1119,4 +1119,5 @@ translations = [
     "Contratto sconosciuto",
     "NEAR allegato:",
     "Questo trasferimento chiama anche il contratto destinatario. Controlla il messaggio prima di firmare.",
+    "Scadenza:",
 ]

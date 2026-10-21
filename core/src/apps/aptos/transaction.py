@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from ubinascii import hexlify
 
 from trezor.lvglui.i18n import gettext as _, keys as i18n_keys
-from trezor.strings import format_amount
+from trezor.strings import format_amount, format_timestamp
 
 from . import tokens
 
@@ -28,6 +28,13 @@ def _is_framework_address(address) -> bool:
 
 def _format_apt(amount: int) -> str:
     return format_amount(amount, APTOS_DECIMALS) + " APT"
+
+
+def _format_expiration(timestamp: int) -> str:
+    # gmtime2000 converts through a signed 32-bit integer on the device.
+    if timestamp <= 946684800 + 0x7FFFFFFF:
+        return format_timestamp(timestamp) + " UTC"
+    return str(timestamp) + " (Unix)"
 
 
 class BcsReader:
@@ -207,6 +214,7 @@ class Transaction:
             amount=transfer.amount,
             max_fee=_format_apt(self.max_gas_amount * self.gas_unit_price),
             function=self.payload.function if self.payload else "",
+            expiration=_format_expiration(self.expiration_timestamp_secs),
             chain_id=str(self.chain_id),
             token=transfer.token,
             signer=signer,

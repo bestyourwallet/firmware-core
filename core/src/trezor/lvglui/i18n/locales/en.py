@@ -1119,4 +1119,5 @@ translations = [
     "Unknown contract",
     "Attached NEAR:",
     "This transfer also calls the receiving contract. Review its message before signing.",
+    "Expiration:",
 ]

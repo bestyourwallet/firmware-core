@@ -2628,6 +2628,7 @@ async def confirm_aptos_transfer(
     function: str,
     chain_id: str,
     token: str,
+    expiration: str,
     signer: str | None = None,
     metadata: str | None = None,
     fee_payer: str | None = None,
@@ -2645,6 +2646,7 @@ async def confirm_aptos_transfer(
         to_address=recipient,
         max_fee=max_fee,
         token_address=metadata,
+        expiration=expiration,
     ):
         screen = AptosTransfer(
             title,
@@ -2662,6 +2664,7 @@ async def confirm_aptos_transfer(
             ctx.primary_color,
             ctx.icon_path,
             striped=striped,
+            expiration=expiration,
         )
         await raise_if_cancelled(
             interact(ctx, screen, "confirm_aptos_transfer", ButtonRequestType.SignTx)

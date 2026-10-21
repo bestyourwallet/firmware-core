@@ -1119,4 +1119,5 @@ translations = [
     "Contrat inconnu",
     "NEAR joint :",
     "Ce transfert appelle aussi le contrat destinataire. Vérifiez son message avant de signer.",
+    "Expiration :",
 ]

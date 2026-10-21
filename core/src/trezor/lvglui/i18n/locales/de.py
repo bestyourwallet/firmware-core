@@ -1119,4 +1119,5 @@ translations = [
     "Unbekannter Vertrag",
     "Angehängte NEAR:",
     "Diese Übertragung ruft auch den Empfängervertrag auf. Prüfen Sie die Nachricht vor dem Signieren.",
+    "Ablaufzeit:",
 ]
