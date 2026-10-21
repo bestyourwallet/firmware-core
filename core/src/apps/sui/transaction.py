@@ -343,10 +343,9 @@ def _match_sui_transfer(kind):
     if not isinstance(kind, ProgrammableTransaction):
         return None
 
-    transfer = _match_native_sui_transfer(kind)
-    if transfer is not None:
-        return transfer
-    return _match_token_transfer(kind)
+    # Object references do not authenticate the Coin type. Use blind signing
+    # for non-native assets until their type can be verified.
+    return _match_native_sui_transfer(kind)
 
 
 def _match_native_sui_transfer(kind: ProgrammableTransaction):
