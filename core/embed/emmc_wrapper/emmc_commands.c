@@ -1549,6 +1549,7 @@ int process_msg_FirmwareUpdateEmmc(uint8_t iface_num, uint32_t msg_size, uint8_t
         ret = update_firmware_from_file(iface_num, msg_recv.path, true, require_confirm);
         if ( ret != 0 )
         {
+            delete_bootloader_update();
             return ret;
         }
 
@@ -1575,6 +1576,7 @@ int process_msg_FirmwareUpdateEmmc(uint8_t iface_num, uint32_t msg_size, uint8_t
             true,
             {
                 send_failure(iface_num, FailureType_Failure_ProcessError, "Update file write failed!");
+                delete_bootloader_update();
                 return -1;
             }
         );
@@ -1585,8 +1587,13 @@ int process_msg_FirmwareUpdateEmmc(uint8_t iface_num, uint32_t msg_size, uint8_t
     }
     else if ( ret == 1 )
     {
+        delete_bootloader_update();
         send_failure(iface_num, FailureType_Failure_ProcessError, "Bootloader downgrade!");
         return -1;
+    }
+    else
+    {
+        delete_bootloader_update();
     }
 
     ret = update_firmware_from_file(iface_num, msg_recv.path, false, require_confirm);
