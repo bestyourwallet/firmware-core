@@ -475,9 +475,11 @@ void fpsensor_irq_disable(void)
     HAL_EXTI_SetConfigLine(&hexti, &pExtiConfig);
 }
 
+#define FP_SPI_TIMEOUT_MS 1000U
+
 static int fp_send_byte(uint8_t value)
 {
-    return HAL_SPI_Transmit(&spi_fp, &value, 1, HAL_MAX_DELAY) == HAL_OK ? 0 : -1;
+    return HAL_SPI_Transmit(&spi_fp, &value, 1, FP_SPI_TIMEOUT_MS) == HAL_OK ? 0 : -1;
 }
 
 static int fp_recv_buffer(uint8_t* rx_buffer, uint32_t length)
@@ -486,7 +488,7 @@ static int fp_recv_buffer(uint8_t* rx_buffer, uint32_t length)
     {
         return -1;
     }
-    return HAL_SPI_Receive(&spi_fp, rx_buffer, length, HAL_MAX_DELAY) == HAL_OK ? 0 : -1;
+    return HAL_SPI_Receive(&spi_fp, rx_buffer, length, FP_SPI_TIMEOUT_MS) == HAL_OK ? 0 : -1;
 }
 
 static void fp_rstn_set(uint8_t level)
