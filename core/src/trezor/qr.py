@@ -240,11 +240,13 @@ def ti_scan_qr(callback_obj):
             camera_paused = False
             try:
                 qr_data = camera.scan_qrcode(80, 180)
+                qr_text = qr_data.decode() if qr_data else None
             except Exception as e:
                 if __debug__:
                     print(f"scan qrcode error: {e}")
                 # await callback_obj.transition_to(callback_obj.SCAN_STATE_ERROR)
                 # await loop.sleep(100)
+                await loop.sleep(5)
                 continue
             if qr_data:
                 if __debug__:
@@ -254,7 +256,7 @@ def ti_scan_qr(callback_obj):
                     camera.stop()
                     # Stop the camera before waking the parent screen so LVGL redraws
                     # do not race with the direct camera overlay refresh.
-                    await callback_obj.on_qr_scanned(qr_data.decode())
+                    await callback_obj.on_qr_scanned(qr_text)
                     from trezor import uart
 
                     uart.flashled_close()
